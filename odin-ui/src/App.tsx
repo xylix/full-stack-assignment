@@ -12,6 +12,7 @@ export const App = (): JSX.Element => {
   const [lng, setLng] = useState(22.4673);
   const [lat, setLat] = useState(59.8613);
   const [zoom, setZoom] = useState(9);
+  const [lighthouses, setLighthouses] = useState([[]])
   useEffect(() => {
     if (map.current) return; // initialize map only once
     const newMap = new mapboxgl.Map({ // @ts-ignore
@@ -36,8 +37,36 @@ export const App = (): JSX.Element => {
         "type": "raster",
         "paint": {"raster-opacity": 0.85}
       })
+
+      // FIXME: the markers are not showing up yet
+      const ship = new mapboxgl.Marker()
+        .setLngLat([59.89134, 22.30606])
+        .addTo(newMap);
+
     })
   });
+
+  useEffect(() => {
+    (async () => {
+        const response = await fetch('http://localhost:8000/lighthouses')
+        const lighthouseLocations = JSON.parse(await response.text())
+        setLighthouses(lighthouseLocations)
+        console.log(lighthouseLocations)
+    })()
+  }, [])
+
+  useEffect(() => {
+    if (map.current?.isStyleLoaded()) {
+      for (const lighthouse of lighthouses) {
+        // FIXME: the markers are not showing up yet
+        const marker = new mapboxgl.Marker()
+          .setLngLat([lighthouse[0], lighthouse[1]])
+          .addTo(map.current);
+      }
+    } else {
+        // TODO: handle loading lighthouses when lighthouse response arrives before map style is ready
+    }
+  }, [lighthouses])
 
 
   return (
